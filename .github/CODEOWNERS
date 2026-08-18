@@ -1,0 +1,9 @@
+# Every change needs the maintainer's eyes. Applies when review is requested;
+# branch protection currently allows the repository admin to self-merge.
+*       @DataSpoof
+
+# Changes here alter what runs in CI, what gets published, and the guardrails
+# AI agents operate under. Review these lines individually.
+/.github/       @DataSpoof
+/CLAUDE.md      @DataSpoof
+/Dockerfile     @DataSpoof

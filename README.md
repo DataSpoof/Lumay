@@ -120,6 +120,16 @@ raises 404) as a FastAPI dependency, so the three single-item routes receive an
 `Item` and never repeat the lookup. Database work lives in `crud.py`, and every
 validation rule lives in `schemas.py` rather than being checked inside handlers.
 
+## Contributing
+
+`main` is protected and takes changes only through a pull request with passing
+checks. See [CONTRIBUTING.md](CONTRIBUTING.md) for the setup, the branch and
+commit conventions, and what a reviewable PR looks like.
+
+AI coding agents should read [CLAUDE.md](CLAUDE.md) first — it records the
+invariants in this codebase that are easy to break by accident, and the rules
+for changes (branch, test, never weaken a test to get CI green).
+
 ## Configuration
 
 Set `DATABASE_URL` to point at another database; it defaults to

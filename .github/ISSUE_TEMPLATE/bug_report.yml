@@ -1,0 +1,29 @@
+name: Bug report
+description: Something behaves differently than documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Include the request you sent and the response you got back.
+      placeholder: |
+        curl -X PUT http://127.0.0.1:8000/items/1 -d '{"price": -1}'
+        -> 500, expected 422
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0, or the commit SHA
+    validations:
+      required: false
