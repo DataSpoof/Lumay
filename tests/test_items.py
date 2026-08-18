@@ -53,3 +53,74 @@ def test_missing_item_returns_404(client):
 def test_validation_rejects_negative_price(client):
     response = client.post("/items", json={"name": "Bad", "price": -1})
     assert response.status_code == 422
+
+
+def test_update_rejects_explicit_null_on_required_fields(client):
+    """Regression: these reached the DB as NOT NULL violations and gave a 500."""
+    item_id = client.post("/items", json={"name": "Lamp", "price": 9.0}).json()["id"]
+
+    for field in ("name", "price", "in_stock"):
+        response = client.put(f"/items/{item_id}", json={field: None})
+        assert response.status_code == 422, f"{field} should be rejected"
+
+    # The item is untouched by the rejected updates.
+    body = client.get(f"/items/{item_id}").json()
+    assert body["name"] == "Lamp"
+    assert body["price"] == 9.0
+
+
+def test_update_can_clear_the_nullable_description(client):
+    item_id = client.post(
+        "/items", json={"name": "Lamp", "description": "brass"}
+    ).json()["id"]
+
+    response = client.put(f"/items/{item_id}", json={"description": None})
+    assert response.status_code == 200
+    assert response.json()["description"] is None
+
+
+def test_empty_update_is_a_no_op(client):
+    created = client.post("/items", json={"name": "Chair", "price": 20.0}).json()
+
+    response = client.put(f"/items/{created['id']}", json={})
+    assert response.status_code == 200
+    assert response.json()["name"] == "Chair"
+    assert response.json()["price"] == 20.0
+
+
+def test_timestamps_are_utc_aware(client):
+    """SQLite stores naive datetimes; responses must still carry an offset."""
+    body = client.post("/items", json={"name": "Clock"}).json()
+
+    for field in ("created_at", "updated_at"):
+        assert body[field].endswith("Z") or "+00:00" in body[field], body[field]
+
+
+def test_update_bumps_updated_at_but_not_created_at(client):
+    created = client.post("/items", json={"name": "Desk", "price": 1.0}).json()
+
+    updated = client.put(f"/items/{created['id']}", json={"price": 2.0}).json()
+
+    assert updated["created_at"] == created["created_at"]
+    assert updated["updated_at"] >= created["updated_at"]
+
+
+def test_pagination_past_the_end_returns_empty(client):
+    client.post("/items", json={"name": "Only"})
+
+    assert client.get("/items?skip=50").json() == []
+
+
+def test_validation_rejects_blank_name_and_overlong_fields(client):
+    assert client.post("/items", json={"name": ""}).status_code == 422
+    assert client.post("/items", json={"name": "x" * 121}).status_code == 422
+    assert (
+        client.post("/items", json={"name": "ok", "description": "d" * 501}).status_code
+        == 422
+    )
+
+
+def test_list_query_params_are_validated(client):
+    assert client.get("/items?skip=-1").status_code == 422
+    assert client.get("/items?limit=0").status_code == 422
+    assert client.get("/items?limit=501").status_code == 422

@@ -37,8 +37,24 @@ http://127.0.0.1:8000/docs and the OpenAPI schema at `/openapi.json`.
 | `description` | str \| null     | Optional, up to 500 chars     |
 | `price`       | float           | Must be >= 0, defaults to `0` |
 | `in_stock`    | bool            | Defaults to `true`            |
-| `created_at`  | datetime        | Set on creation               |
-| `updated_at`  | datetime        | Refreshed on every update     |
+| `created_at`  | datetime        | Set on creation, UTC          |
+| `updated_at`  | datetime        | Refreshed on every update, UTC |
+
+### Update semantics
+
+`PUT /items/{id}` is a *partial* update: fields you omit keep their current
+value, so you never have to send the whole object to change one field.
+
+`description` is the only nullable field, so `{"description": null}` clears it.
+Sending an explicit `null` for `name`, `price`, or `in_stock` is rejected with a
+422 and a message naming the field — omit the field instead.
+
+### Timestamps
+
+Timestamps are generated and stored as UTC and always come back with an offset
+(`...Z`). SQLite has no native timestamp type and silently discards `tzinfo` on
+write, so `ItemRead` re-attaches UTC on the way out; responses are therefore
+offset-aware on SQLite and on servers like Postgres alike.
 
 ### Example
 
@@ -91,13 +107,18 @@ public from the repository's Packages page if you want anonymous `docker pull`.
 
 ```
 app/
-  main.py       FastAPI app and route handlers
+  main.py       FastAPI app, route handlers, get_item_or_404 dependency
   database.py   Engine, session factory, get_db dependency
   models.py     SQLAlchemy ORM models
-  schemas.py    Pydantic request/response models
+  schemas.py    Pydantic request/response models and validation rules
   crud.py       Database operations
 tests/          pytest suite
 ```
+
+Route handlers stay thin: `get_item_or_404` resolves the path parameter (or
+raises 404) as a FastAPI dependency, so the three single-item routes receive an
+`Item` and never repeat the lookup. Database work lives in `crud.py`, and every
+validation rule lives in `schemas.py` rather than being checked inside handlers.
 
 ## Configuration
 
