@@ -11,6 +11,11 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Least privilege: CI only ever needs to read the code. Pull requests from
+# forks therefore cannot use this workflow's token to write to the repository.
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Ruff lint and format
