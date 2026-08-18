@@ -1,5 +1,8 @@
 # Lumay
 
+[![CI](https://github.com/DataSpoof/Lumay/actions/workflows/ci.yml/badge.svg)](https://github.com/DataSpoof/Lumay/actions/workflows/ci.yml)
+[![CD](https://github.com/DataSpoof/Lumay/actions/workflows/cd.yml/badge.svg)](https://github.com/DataSpoof/Lumay/actions/workflows/cd.yml)
+
 A simple CRUD API built with [FastAPI](https://fastapi.tiangolo.com/), SQLAlchemy 2.0, and SQLite.
 
 ## Quick start
@@ -52,6 +55,37 @@ pytest -q
 
 Each test runs against a temporary SQLite file, so the suite never touches your
 development database.
+
+## Docker
+
+```bash
+docker build -t lumay .
+docker run --rm -p 8000:8000 lumay
+```
+
+Published images are available from GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/dataspoof/lumay:latest
+```
+
+## CI/CD
+
+Two GitHub Actions workflows live in `.github/workflows/`:
+
+**`ci.yml`** runs on every push and pull request to `main`:
+
+- `ruff check` and `ruff format --check` for linting and formatting
+- `pytest` on Python 3.11 and 3.12
+
+**`cd.yml`** runs on pushes to `main` and on `v*` tags. It re-runs the test suite,
+then builds the Docker image and pushes it to `ghcr.io/dataspoof/lumay`. Tags
+applied: `latest` (main), `main`, `sha-<short>`, and for a release tag like
+`v1.2.3` also `1.2.3` and `1.2`.
+
+Authentication uses the built-in `GITHUB_TOKEN`, so no repository secrets need to
+be configured. Packages published this way start out private; make the package
+public from the repository's Packages page if you want anonymous `docker pull`.
 
 ## Layout
 

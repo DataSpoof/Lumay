@@ -56,18 +56,14 @@ def read_item(item_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/items/{item_id}", response_model=schemas.ItemRead, tags=["items"])
-def update_item(
-    item_id: int, item: schemas.ItemUpdate, db: Session = Depends(get_db)
-):
+def update_item(item_id: int, item: schemas.ItemUpdate, db: Session = Depends(get_db)):
     db_item = crud.get_item(db, item_id)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return crud.update_item(db, db_item, item)
 
 
-@app.delete(
-    "/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["items"]
-)
+@app.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["items"])
 def delete_item(item_id: int, db: Session = Depends(get_db)):
     db_item = crud.get_item(db, item_id)
     if db_item is None:
